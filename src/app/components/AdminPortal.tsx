@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Users, DollarSign, FileText, Activity, Settings as SettingsIcon, Menu, X, LogOut, Heart } from 'lucide-react';
+import { LayoutDashboard, Users, DollarSign, Activity, Settings as SettingsIcon, Menu, X, LogOut, Heart } from 'lucide-react';
 import NewDashboard from './NewDashboard';
 import Members from './Members';
 import Contributions from './Contributions';
