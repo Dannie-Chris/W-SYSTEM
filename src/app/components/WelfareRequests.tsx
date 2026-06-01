@@ -10,8 +10,19 @@ import {
   X,
 } from "lucide-react";
 
+interface Request {
+  id: number;
+  memberName?: string;
+  requestType: string;
+  amount: number;
+  reason: string;
+  priority: string;
+  status: string;
+  createdAt: string;
+}
+
 export default function WelfareRequests() {
-  const [requestsData, setRequestsData] = useState<any[]>([]);
+  const [requestsData, setRequestsData] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,7 +55,7 @@ export default function WelfareRequests() {
     fetchRequests();
   }, []);
 
-  // HANDLE INPUT CHANGE
+  // HANDLE INPUT
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -58,73 +69,71 @@ export default function WelfareRequests() {
 
   // SUBMIT REQUEST
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    await API.post("/requests", {
-      userId: 1, // ⚠️ replace later with logged-in user ID
-      requestType: formData.requestType,
-      amount: Number(formData.amount),
-      reason: formData.reason,
-      priority: formData.priority,
-    });
+    try {
+      await API.post("/requests", {
+        userId: 1,
+        requestType: formData.requestType,
+        amount: Number(formData.amount),
+        reason: formData.reason,
+        priority: formData.priority,
+      });
 
-    fetchRequests();
-    setShowSubmitModal(false);
+      fetchRequests();
+      setShowSubmitModal(false);
 
-    setFormData({
-      memberName: "",
-      requestType: "",
-      amount: "",
-      reason: "",
-      priority: "",
-    });
-  } catch (error) {
-    console.log("Failed to submit request", error);
-  }
-};
+      setFormData({
+        memberName: "",
+        requestType: "",
+        amount: "",
+        reason: "",
+        priority: "",
+      });
+    } catch (error) {
+      console.log("Failed to submit request", error);
+    }
+  };
+
+  // APPROVE REQUEST
+  const approveRequest = async (id: number) => {
+    try {
+      await API.patch(`/requests/${id}/status`, {
+        status: "Approved",
+      });
+
+      fetchRequests();
+    } catch (error) {
+      console.log("Failed to approve request", error);
+    }
+  };
 
   // FILTER REQUESTS
   const filteredRequests = requestsData.filter((req) => {
+    const matchesSearch =
+      (req.memberName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (req.requestType?.toLowerCase() || "").includes(searchTerm.toLowerCase());
 
-  const matchesSearch =
-    req.user?.name
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase()) ||
+    const matchesStatus =
+      statusFilter === "All" || req.status === statusFilter;
 
-    req.title
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    const matchesType =
+      typeFilter === "All" || req.requestType === typeFilter;
 
-  const matchesStatus =
-    statusFilter === "All" ||
-    req.status === statusFilter;
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
-  const matchesType =
-    typeFilter === "All" ||
-    req.title === typeFilter;
-
-  return (
-    matchesSearch &&
-    matchesStatus &&
-    matchesType
-  );
-});
   // STATUS COLORS
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Approved":
         return "bg-green-100 text-green-800";
-
       case "Rejected":
         return "bg-red-100 text-red-800";
-
       case "Pending":
         return "bg-yellow-100 text-yellow-800";
-
       case "Disbursed":
         return "bg-blue-100 text-blue-800";
-
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -135,76 +144,41 @@ export default function WelfareRequests() {
     switch (status) {
       case "Approved":
         return <CheckCircle className="w-5 h-5 text-green-600" />;
-
       case "Rejected":
         return <XCircle className="w-5 h-5 text-red-600" />;
-
       case "Pending":
         return <Clock className="w-5 h-5 text-yellow-600" />;
-
       case "Disbursed":
         return <CheckCircle className="w-5 h-5 text-blue-600" />;
-
       default:
         return null;
     }
   };
 
-  // STATS
   const stats = {
     total: requestsData.length,
-
-    pending: requestsData.filter(
-      (r) => r.status === "Pending"
-    ).length,
-
-    approved: requestsData.filter(
-      (r) => r.status === "Approved"
-    ).length,
-
-    totalAmount: requestsData.reduce(
-      (sum, r) => sum + (r.amount || 0),
-      0
-    ),
+    pending: requestsData.filter((r) => r.status === "Pending").length,
+    approved: requestsData.filter((r) => r.status === "Approved").length,
+    totalAmount: requestsData.reduce((sum, r) => sum + (r.amount || 0), 0),
   };
 
   if (loading) {
-    return (
-      <div className="p-6">
-        Loading requests...
-      </div>
-    );
+    return <div className="p-6">Loading requests...</div>;
   }
-  const approveRequest = async (id: number) => {
-  try {
-    await API.patch(`/requests/${id}/status`, {
-      status: "Approved",
-    });
-
-    fetchRequests();
-  } catch (error) {
-    console.log("Failed to approve request", error);
-  }
-};
 
   return (
     <div className="p-6 space-y-6">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welfare Requests
-          </h1>
-
-          <p className="text-gray-600 mt-1">
-            Manage welfare requests
-          </p>
+          <h1 className="text-3xl font-bold">Welfare Requests</h1>
+          <p className="text-gray-600">Manage welfare requests</p>
         </div>
 
         <button
           onClick={() => setShowSubmitModal(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Submit Request
@@ -212,353 +186,122 @@ export default function WelfareRequests() {
       </div>
 
       {/* STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-4">
 
-        <div className="bg-white rounded-lg shadow p-4 border">
-          <p className="text-sm text-gray-600">
-            Total Requests
-          </p>
-
-          <p className="text-2xl font-bold mt-1">
-            {stats.total}
-          </p>
+        <div className="p-4 bg-white shadow rounded">
+          Total: {stats.total}
         </div>
 
-        <div className="bg-white rounded-lg shadow p-4 border">
-          <p className="text-sm text-gray-600">
-            Pending
-          </p>
-
-          <p className="text-2xl font-bold text-yellow-600 mt-1">
-            {stats.pending}
-          </p>
+        <div className="p-4 bg-white shadow rounded">
+          Pending: {stats.pending}
         </div>
 
-        <div className="bg-white rounded-lg shadow p-4 border">
-          <p className="text-sm text-gray-600">
-            Approved
-          </p>
-
-          <p className="text-2xl font-bold text-green-600 mt-1">
-            {stats.approved}
-          </p>
+        <div className="p-4 bg-white shadow rounded">
+          Approved: {stats.approved}
         </div>
 
-        <div className="bg-white rounded-lg shadow p-4 border">
-          <p className="text-sm text-gray-600">
-            Total Amount
-          </p>
-
-          <p className="text-2xl font-bold text-blue-600 mt-1">
-            KSh {stats.totalAmount.toLocaleString()}
-          </p>
+        <div className="p-4 bg-white shadow rounded">
+          KSh {stats.totalAmount.toLocaleString()}
         </div>
 
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-lg shadow border">
+      <div className="bg-white rounded shadow">
 
-        {/* FILTERS */}
-        <div className="p-4 border-b flex flex-col lg:flex-row gap-4">
+        <div className="p-4 flex gap-4">
+          <input
+            className="border p-2 flex-1"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
 
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border p-2"
+          >
+            <option>All</option>
+            <option>Pending</option>
+            <option>Approved</option>
+            <option>Rejected</option>
+            <option>Disbursed</option>
+          </select>
 
-            <input
-              type="text"
-              placeholder="Search requests..."
-              value={searchTerm}
-              onChange={(e) =>
-                setSearchTerm(e.target.value)
-              }
-              className="w-full pl-10 pr-4 py-2 border rounded-lg"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-400" />
-
-            <select
-              value={statusFilter}
-              onChange={(e) =>
-                setStatusFilter(e.target.value)
-              }
-              className="px-4 py-2 border rounded-lg"
-            >
-              <option value="All">All Status</option>
-
-              <option value="Pending">
-                Pending
-              </option>
-
-              <option value="Approved">
-                Approved
-              </option>
-
-              <option value="Rejected">
-                Rejected
-              </option>
-
-              <option value="Disbursed">
-                Disbursed
-              </option>
-            </select>
-
-            <select
-              value={typeFilter}
-              onChange={(e) =>
-                setTypeFilter(e.target.value)
-              }
-              className="px-4 py-2 border rounded-lg"
-            >
-              <option value="All">All Types</option>
-
-              <option value="Medical">
-                Medical
-              </option>
-
-              <option value="Education">
-                Education
-              </option>
-
-              <option value="Emergency">
-                Emergency
-              </option>
-
-              <option value="Funeral">
-                Funeral
-              </option>
-            </select>
-          </div>
-
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="border p-2"
+          >
+            <option>All</option>
+            <option>Medical</option>
+            <option>Education</option>
+            <option>Emergency</option>
+            <option>Funeral</option>
+          </select>
         </div>
 
-        {/* REQUESTS */}
         <div className="divide-y">
+          {filteredRequests.map((req) => (
+            <div key={req.id} className="p-4 flex justify-between">
 
-          {filteredRequests.map((request) => (
-
-            <div
-              key={request.id}
-              className="p-6 hover:bg-gray-50"
-            >
-
-              <div className="flex items-start justify-between">
-
-                <div className="flex items-start gap-4 flex-1">
-
-                  <div className="mt-1">
-                    {getStatusIcon(request.status)}
-                  </div>
-
-                  <div className="flex-1">
-
-                    <div className="flex items-center gap-3 mb-2">
-
-                      <h3 className="text-lg font-semibold">
-                        {request.memberName}
-                      </h3>
-
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${getStatusColor(
-                          request.status
-                        )}`}
-                      >
-                        {request.status}
-                      </span>
-
-                    </div>
-
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-2">
-
-                      <span>
-                        Type: {request.requestType}
-                      </span>
-
-                      <span>
-                        Amount: KSh{" "}
-                        {request.amount?.toLocaleString()}
-                      </span>
-
-                      <span>
-                        Priority: {request.priority}
-                      </span>
-
-                    </div>
-
-                    <p className="text-sm text-gray-700">
-                      {request.reason}
-                    </p>
-
-                    <p className="text-xs text-gray-500 mt-2">
-                      {new Date(
-                        request.createdAt
-                      ).toLocaleDateString()}
-                    </p>
-
-                  </div>
-
+              <div>
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(req.status)}
+                  <b>{req.memberName}</b>
+                  <span className={`px-2 text-xs rounded ${getStatusColor(req.status)}`}>
+                    {req.status}
+                  </span>
                 </div>
 
+                <p>{req.requestType} - KSh {req.amount}</p>
+                <p className="text-sm text-gray-500">{req.reason}</p>
               </div>
 
+              <button
+                onClick={() => approveRequest(req.id)}
+                className="text-green-600"
+              >
+                Approve
+              </button>
+
             </div>
-
           ))}
-
-        </div>
-
-        {/* FOOTER */}
-        <div className="px-6 py-4 border-t">
-          <p className="text-sm text-gray-700">
-            Showing{" "}
-            <span className="font-medium">
-              {filteredRequests.length}
-            </span>{" "}
-            of{" "}
-            <span className="font-medium">
-              {requestsData.length}
-            </span>{" "}
-            requests
-          </p>
         </div>
 
       </div>
 
-      {/* MODAL */}
+      {/* MODAL (kept simple) */}
       {showSubmitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
 
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4">
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white p-6 rounded w-[500px]"
+          >
 
-            <div className="flex items-center justify-between p-6 border-b">
+            <input
+              name="memberName"
+              value={formData.memberName}
+              onChange={handleChange}
+              placeholder="Member Name"
+              className="border p-2 w-full mb-2"
+            />
 
-              <h2 className="text-2xl font-bold">
-                Submit Request
-              </h2>
+            <input
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+              placeholder="Amount"
+              className="border p-2 w-full mb-2"
+            />
 
-              <button
-                onClick={() =>
-                  setShowSubmitModal(false)
-                }
-              >
-                <X className="w-6 h-6" />
-              </button>
+            <button className="bg-blue-600 text-white px-4 py-2 w-full">
+              Submit
+            </button>
 
-            </div>
-
-            <form
-              onSubmit={handleSubmit}
-              className="p-6 space-y-4"
-            >
-
-              <input
-                type="text"
-                name="memberName"
-                value={formData.memberName}
-                onChange={handleChange}
-                placeholder="Member Name"
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              />
-
-              <select
-                name="requestType"
-                value={formData.requestType}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              >
-                <option value="">
-                  Select Type
-                </option>
-
-                <option value="Medical">
-                  Medical
-                </option>
-
-                <option value="Education">
-                  Education
-                </option>
-
-                <option value="Emergency">
-                  Emergency
-                </option>
-
-                <option value="Funeral">
-                  Funeral
-                </option>
-              </select>
-
-              <input
-                type="number"
-                name="amount"
-                value={formData.amount}
-                onChange={handleChange}
-                placeholder="Amount"
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              />
-
-              <select
-                name="priority"
-                value={formData.priority}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              >
-                <option value="">
-                  Select Priority
-                </option>
-
-                <option value="High">
-                  High
-                </option>
-
-                <option value="Medium">
-                  Medium
-                </option>
-
-                <option value="Low">
-                  Low
-                </option>
-              </select>
-
-              <textarea
-                name="reason"
-                value={formData.reason}
-                onChange={handleChange}
-                placeholder="Reason"
-                rows={4}
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              />
-
-              <div className="flex justify-end gap-3">
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowSubmitModal(false)
-                  }
-                  className="px-4 py-2 border rounded-lg"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-                >
-                  Submit Request
-                </button>
-
-              </div>
-
-            </form>
-
-          </div>
+          </form>
 
         </div>
       )}
