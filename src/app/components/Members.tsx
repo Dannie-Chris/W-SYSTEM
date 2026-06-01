@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import API from '../../api/api';
 import { Search, Plus, Edit, Trash2, Eye, Filter, X } from 'lucide-react';
 
 interface Member {
@@ -8,32 +9,82 @@ interface Member {
   idNumber: string;
   phone: string;
   email: string;
+  createdAt: string;
   contributionStatus: 'Active' | 'Inactive' | 'Suspended';
   joinDate: string;
   totalContributions: number;
   outstandingBalance: number;
 }
 
-const membersData: Member[] = [
-  { id: 'MEM001', memberForm: 'MF-2024-001', fullName: 'John Kamau', idNumber: '12345678', phone: '0712345678', email: 'john.k@email.com', contributionStatus: 'Active', joinDate: '2024-01-15', totalContributions: 12000, outstandingBalance: 0 },
-  { id: 'MEM002', memberForm: 'MF-2024-002', fullName: 'Mary Wanjiru', idNumber: '23456789', phone: '0723456789', email: 'mary.w@email.com', contributionStatus: 'Active', joinDate: '2024-02-20', totalContributions: 8000, outstandingBalance: 2000 },
-  { id: 'MEM003', memberForm: 'MF-2024-003', fullName: 'Peter Ochieng', idNumber: '34567890', phone: '0734567890', email: 'peter.o@email.com', contributionStatus: 'Inactive', joinDate: '2024-03-10', totalContributions: 5000, outstandingBalance: 5000 },
-  { id: 'MEM004', memberForm: 'MF-2024-004', fullName: 'Grace Akinyi', idNumber: '45678901', phone: '0745678901', email: 'grace.a@email.com', contributionStatus: 'Active', joinDate: '2024-01-05', totalContributions: 15000, outstandingBalance: 0 },
-  { id: 'MEM005', memberForm: 'MF-2024-005', fullName: 'David Mwangi', idNumber: '56789012', phone: '0756789012', email: 'david.m@email.com', contributionStatus: 'Active', joinDate: '2024-02-28', totalContributions: 10000, outstandingBalance: 1000 },
-];
+
 
 export default function Members() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const filteredMembers = membersData.filter(member => {
-    const matchesSearch = member.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.idNumber.includes(searchTerm) ||
-                         member.memberForm.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || member.contributionStatus === statusFilter;
-    return matchesSearch && matchesStatus;
+  const [membersData, setMembersData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({
+  name: "",
+  email: "",
+  phone: "",
+});
+
+  const fetchMembers = async () => {
+  try {
+    const res = await API.get("/members");
+    setMembersData(res.data);
+  } catch (error) {
+    console.log("Failed to fetch members", error);
+  } finally {
+    setLoading(false);
+  }
+  };
+
+  const handleChange = (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+  setFormData({
+    ...formData,
+    [e.target.name]: e.target.value,
   });
+};
+  const handleSubmit = async (
+  e: React.FormEvent
+) => {
+  e.preventDefault();
+  console.log(formData);
+
+  try {
+    await API.post("/members", formData);
+
+    fetchMembers();
+
+    setShowAddModal(false);
+
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+    });
+
+  } catch (error) {
+    console.log("Failed to add member", error);
+  }
+};
+
+  useEffect(() => {
+  fetchMembers();
+  }, []);
+  
+  const filteredMembers = membersData.filter((member) => {
+  return (
+    member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.phone?.includes(searchTerm)
+  );
+});
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -43,6 +94,10 @@ export default function Members() {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+  
+  if (loading) {
+  return <div className="p-6">Loading members...</div>;
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -118,7 +173,9 @@ export default function Members() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Form No.</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+  Member ID
+</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Full Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID Number</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
@@ -131,22 +188,26 @@ export default function Members() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredMembers.map((member) => (
                 <tr key={member.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.memberForm}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">MEM-{member.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{member.fullName}</div>
+                    <div className="text-sm font-medium text-gray-900">{member.name}</div>
                     <div className="text-sm text-gray-500">{member.email}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{member.idNumber}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">N/A</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{member.phone}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(member.contributionStatus)}`}>
-                      {member.contributionStatus}
+                      Active
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{member.joinDate}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+ {member.createdAt ? new Date(member.createdAt).toLocaleDateString() : "N/A"}
+</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">KSh {member.totalContributions.toLocaleString()}</div>
-                    {member.outstandingBalance > 0 && (
+                    <div className="text-sm font-medium text-gray-900">
+  KSh {(member.totalContributions || 0).toLocaleString()}
+</div>
+                    {false&& (
                       <div className="text-xs text-red-600">Owes: KSh {member.outstandingBalance.toLocaleString()}</div>
                     )}
                   </td>
@@ -190,16 +251,22 @@ export default function Members() {
               </button>
             </div>
 
-            <form className="p-6 space-y-4">
+            <form
+  className="p-6 space-y-4"
+  onSubmit={handleSubmit}
+>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                   <input
-                    type="text"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter full name"
-                  />
+  type="text"
+  name="name"
+  value={formData.name}
+  onChange={handleChange}
+  required
+  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+  placeholder="Enter full name"
+/>
                 </div>
 
                 <div>
@@ -215,20 +282,26 @@ export default function Members() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
                   <input
-                    type="tel"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0712345678"
-                  />
+  type="tel"
+  name="phone"
+  value={formData.phone}
+  onChange={handleChange}
+  required
+  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+  placeholder="0712345678"
+/>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                   <input
-                    type="email"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="email@example.com"
-                  />
+  type="email"
+  name="email"
+  value={formData.email}
+  onChange={handleChange}
+  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+  placeholder="email@example.com"
+/>
                 </div>
 
                 <div>

@@ -17,6 +17,7 @@ interface AdminPortalProps {
 export default function AdminPortal({ onLogout, userRole }: AdminPortalProps) {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const navigation = [
     { id: 'dashboard' as Page, name: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'member'] },
@@ -95,13 +96,14 @@ export default function AdminPortal({ onLogout, userRole }: AdminPortalProps) {
                   <Users className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">{userRole === 'admin' ? 'Admin User' : 'Member User'}</p>
-                  <p className="text-xs text-gray-400">{userRole}@welfare.com</p>
+                  <p className="text-sm font-medium">
+  {user?.role === "admin" ? "Admin User" : "Member User"}
+</p>
                 </div>
               </div>
               <button
                 onClick={onLogout}
-                className="w-full flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                className="flex items-center gap-2 px-2 py-1 bg-gray-800 rounded-md hover:bg-gray-700 transition-colors text-sm"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Logout</span>
@@ -109,12 +111,12 @@ export default function AdminPortal({ onLogout, userRole }: AdminPortalProps) {
             </div>
           ) : (
             <button
-              onClick={onLogout}
-              className="w-full p-2 rounded-lg hover:bg-gray-800 transition-colors"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5 mx-auto" />
-            </button>
+  onClick={onLogout}
+  className="p-1 rounded-md hover:bg-gray-800 transition-colors"
+  title="Logout"
+>
+  <LogOut className="w-4 h-4 mx-auto" />
+</button>
           )}
         </div>
       </aside>
@@ -132,7 +134,13 @@ export default function AdminPortal({ onLogout, userRole }: AdminPortalProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </button>
-              <span className="text-sm text-gray-600">May 12, 2026</span>
+              <span className="text-sm text-gray-600">
+  {new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  })}
+</span>
             </div>
           </div>
         </div>
