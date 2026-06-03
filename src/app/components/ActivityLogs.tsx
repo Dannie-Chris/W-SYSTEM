@@ -14,14 +14,8 @@ export default function ActivityLogs() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState("All");
-  const [entityFilter, setEntityFilter] = useState("All");
-  <input
-  type="text"
-  placeholder="Filter logs..."
-  value={entityFilter}
-  onChange={(e) => setEntityFilter(e.target.value)}
-  className="border p-2"
-/>
+  const [entityFilter] = useState("All");
+   
   // FETCH LOGS
   const fetchLogs = async () => {
     try {

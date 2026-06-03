@@ -345,7 +345,7 @@ export default function WelfareRequests() {
             >
              <button
   onClick={() => approveRequest(request.id)}
-  className="bg-green-500 text-white px-3 py-1"
+  className="bg-green-500 text-white px-3 py-1 rounded"
 >
   Approve
 </button> 
