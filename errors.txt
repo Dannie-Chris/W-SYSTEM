@@ -1,0 +1,7 @@
+
+> welfare-management-system@1.0.0 build
+> tsc && vite build
+
+src/app/components/ActivityLogs.tsx(17,24): error TS6133: 'setEntityFilter' is declared but its value is never read.
+src/app/components/Members.tsx(26,10): error TS6133: 'members' is declared but its value is never read.
+src/app/components/Members.tsx(26,19): error TS6133: 'setMembers' is declared but its value is never read.

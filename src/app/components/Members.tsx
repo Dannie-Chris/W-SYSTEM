@@ -3,19 +3,19 @@ import API from '../../api/api';
 import { Search, Plus, Edit, Trash2, Eye, Filter, X } from 'lucide-react';
 
 
-interface Member {
-  id: string;
-  memberForm: string;
-  fullName: string;
-  idNumber: string;
-  phone: string;
-  email: string;
-  createdAt: string;
-  contributionStatus: 'Active' | 'Inactive' | 'Suspended';
-  joinDate: string;
-  totalContributions: number;
-  outstandingBalance: number;
-}
+// interface Member {
+//   id: string;
+//   memberForm: string;
+//   fullName: string;
+//   idNumber: string;
+//   phone: string;
+//   email: string;
+//   createdAt: string;
+//   contributionStatus: 'Active' | 'Inactive' | 'Suspended';
+//   joinDate: string;
+//   totalContributions: number;
+//   outstandingBalance: number;
+// }
 
 
 
@@ -23,7 +23,7 @@ export default function Members() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [members, setMembers] = useState<Member[]>([]);
+  // const [members, setMembers] = useState<Member[]>([]);
 
   const [membersData, setMembersData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
