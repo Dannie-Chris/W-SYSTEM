@@ -63,7 +63,7 @@ export default function WelfareRequests() {
 
   try {
     await API.post("/requests", {
-      userId: "", // ⚠️ replace later with logged-in user ID
+      userId: Number(formData.userId), // ⚠️ replace later with logged-in user ID
       requestType: formData.requestType,
       amount: Number(formData.amount),
       reason: formData.reason,
