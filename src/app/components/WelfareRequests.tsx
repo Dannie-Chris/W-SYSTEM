@@ -365,8 +365,8 @@ export default function WelfareRequests() {
                     <div className="flex items-center gap-3 mb-2">
 
                       <h3 className="text-lg font-semibold">
-                        {request.memberName}
-                      </h3>
+  {request.user?.name || "Unknown User"}
+</h3>
 
                       <span
                         className={`px-2 py-1 text-xs rounded-full ${getStatusColor(
