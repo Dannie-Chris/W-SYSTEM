@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../../api/api";
-import { Save, Users, Palette, Bell } from "lucide-react";
+import { Save, Users, Bell } from "lucide-react";
 
 interface User {
   id: string;
@@ -13,29 +13,28 @@ interface User {
 interface SettingsData {
   welfareName: string;
   contributionAmount: number;
-  theme: "light" | "dark";
   currency: string;
   emailNotifications: boolean;
   smsNotifications: boolean;
 }
+
+const defaultSettings: SettingsData = {
+  welfareName: "Welfare Management System",
+  contributionAmount: 500, // ✅ default safe value
+  currency: "KSh",
+  emailNotifications: true,
+  smsNotifications: false,
+};
 
 export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [users, setUsers] = useState<User[]>([]);
-
-  const [form, setForm] = useState<SettingsData>({
-    welfareName: "",
-    contributionAmount: 0,
-    theme: "light",
-    currency: "KSh",
-    emailNotifications: true,
-    smsNotifications: false,
-  });
+  const [form, setForm] = useState<SettingsData>(defaultSettings);
 
   // =========================
-  // FETCH SETTINGS + USERS
+  // FETCH DATA
   // =========================
   useEffect(() => {
     const fetchData = async () => {
@@ -47,8 +46,14 @@ export default function Settings() {
           API.get("/users"),
         ]);
 
-        setForm(settingsRes.data);
-        setUsers(usersRes.data);
+        setForm({
+          ...defaultSettings,
+          ...settingsRes.data, // merge safely
+          contributionAmount:
+            settingsRes.data?.contributionAmount ?? 500,
+        });
+
+        setUsers(usersRes.data || []);
       } catch (err) {
         console.error("Failed to load settings:", err);
       } finally {
@@ -60,7 +65,7 @@ export default function Settings() {
   }, []);
 
   // =========================
-  // HANDLE INPUT CHANGE
+  // HANDLE CHANGE
   // =========================
   const handleChange = (key: keyof SettingsData, value: any) => {
     setForm((prev) => ({
@@ -87,12 +92,17 @@ export default function Settings() {
     }
   };
 
+  // =========================
+  // LOADING STATE (IMPORTANT FIX)
+  // =========================
   if (loading) {
     return <div className="p-6 text-gray-600">Loading settings...</div>;
   }
 
   return (
     <div className="p-6 space-y-6">
+
+      {/* HEADER */}
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-gray-600">Configure your welfare system</p>
@@ -107,17 +117,21 @@ export default function Settings() {
           </div>
 
           <div className="p-6 space-y-4">
+
             <input
               className="w-full border p-2 rounded"
               value={form.welfareName}
-              onChange={(e) => handleChange("welfareName", e.target.value)}
-              placeholder="Welfare name"
+              onChange={(e) =>
+                handleChange("welfareName", e.target.value)
+              }
             />
 
             <select
               className="w-full border p-2 rounded"
               value={form.currency}
-              onChange={(e) => handleChange("currency", e.target.value)}
+              onChange={(e) =>
+                handleChange("currency", e.target.value)
+              }
             >
               <option value="KSh">KSh</option>
               <option value="USD">USD</option>
@@ -129,10 +143,13 @@ export default function Settings() {
               className="w-full border p-2 rounded"
               value={form.contributionAmount}
               onChange={(e) =>
-                handleChange("contributionAmount", Number(e.target.value))
+                handleChange(
+                  "contributionAmount",
+                  Number(e.target.value)
+                )
               }
-              placeholder="Monthly contribution"
             />
+
           </div>
         </div>
 
@@ -155,14 +172,22 @@ export default function Settings() {
               </thead>
 
               <tbody>
-                {users.map((user) => (
-                  <tr key={user.id} className="border-t">
-                    <td className="p-2">{user.name}</td>
-                    <td>{user.email}</td>
-                    <td>{user.role}</td>
-                    <td>{user.status}</td>
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="p-4 text-gray-500">
+                      No users found
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  users.map((user) => (
+                    <tr key={user.id} className="border-t">
+                      <td className="p-2">{user.name}</td>
+                      <td>{user.email}</td>
+                      <td>{user.role}</td>
+                      <td>{user.status}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -176,7 +201,8 @@ export default function Settings() {
           </div>
 
           <div className="p-6 space-y-4">
-            <label className="flex justify-between items-center">
+
+            <label className="flex justify-between">
               Email Notifications
               <input
                 type="checkbox"
@@ -187,7 +213,7 @@ export default function Settings() {
               />
             </label>
 
-            <label className="flex justify-between items-center">
+            <label className="flex justify-between">
               SMS Notifications
               <input
                 type="checkbox"
@@ -197,6 +223,7 @@ export default function Settings() {
                 }
               />
             </label>
+
           </div>
         </div>
 
@@ -210,6 +237,7 @@ export default function Settings() {
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
+
       </form>
     </div>
   );
