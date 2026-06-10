@@ -94,7 +94,7 @@ export default function WelfareRequests() {
       ?.toLowerCase()
       .includes(searchTerm.toLowerCase()) ||
 
-    req.title
+    req.requestType === typeFilter
       ?.toLowerCase()
       .includes(searchTerm.toLowerCase());
 
@@ -104,8 +104,7 @@ export default function WelfareRequests() {
 
   const matchesType =
     typeFilter === "All" ||
-    req.title === typeFilter;
-
+   req.requestType?.toLowerCase()
   return (
     matchesSearch &&
     matchesStatus &&
@@ -186,6 +185,17 @@ export default function WelfareRequests() {
     fetchRequests();
   } catch (error) {
     console.log("Failed to approve request", error);
+  }
+};
+ const rejectRequest = async (id: number) => {
+  try {
+    await API.patch(`/requests/${id}/status`, {
+      status: "Rejected",
+    });
+
+    fetchRequests();
+  } catch (error) {
+    console.log("Failed to reject request", error);
   }
 };
 
@@ -351,6 +361,12 @@ export default function WelfareRequests() {
 >
   Approve
 </button> 
+<button
+  onClick={() => rejectRequest(request.id)}
+  className="bg-red-500 text-white px-3 py-1 rounded ml-2"
+>
+  Reject
+</button>
 
               <div className="flex items-start justify-between">
 
