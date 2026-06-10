@@ -4,6 +4,7 @@ import API from "../../api/api";
 import {
   Search,
   Plus,
+  Edit,
   Eye,
   Trash2
 } from "lucide-react";
@@ -69,6 +70,28 @@ export default function Contributions() {
         .includes(searchTerm)
     );
   });
+  const handleView = (id: number) => {
+  console.log("view", id);
+  // open modal or route
+};
+
+const handleEdit = (id: number) => {
+  console.log("edit", id);
+  // open edit modal
+};
+
+const handleDelete = async (id: number) => {
+  try {
+    await API.delete(`/contributions/${id}`);
+    alert("Deleted successfully");
+
+    // refresh list
+    fetchContributions();
+  } catch (err) {
+    console.error(err);
+    alert("Delete failed");
+  }
+};
 
   // ADD CONTRIBUTION
   const addContribution = async () => {
@@ -287,13 +310,28 @@ export default function Contributions() {
 
                     <div className="flex items-center gap-3">
 
-                      <button className="text-blue-600">
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      <button
+    onClick={() => handleView(contribution.id)}
+    className="text-blue-600 hover:text-blue-800"
+  >
+    <Eye size={18} />
+  </button>
 
-                      <button className="text-red-600">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+  {/* EDIT */}
+  <button
+    onClick={() => handleEdit(contribution.id)}
+    className="text-green-600 hover:text-green-800"
+  >
+    <Edit size={18} />
+  </button>
+
+  {/* DELETE */}
+  <button
+    onClick={() => handleDelete(contribution.id)}
+    className="text-red-600 hover:text-red-800"
+  >
+    <Trash2 size={18} />
+  </button>
 
                     </div>
 
